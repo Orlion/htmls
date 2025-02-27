@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家庭星星月历</title>
+    <style>
+        /* 保持原有样式不变 */
+        :root {
+            --primary-color: #3a6ea5;
+            --accent-color: #ff9a3c;
+            --light-gray: #f5f7fa;
+            --border-color: #e1e5eb;
+            --text-color: #333;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --modal-bg: rgba(0, 0, 0, 0.5);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            overflow: hidden; /* 防止出现滚动条 */
+        }
+        
+        body {
+            background-color: var(--light-gray);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 0.3rem;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .calendar-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            padding: 0.8rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            padding-bottom: 0.6rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .calendar-title {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: auto 1fr 1fr 1fr 1fr 1fr;
+            flex: 1;
+            gap: 0.4rem;
+            height: calc(100% - 4rem); /* 减去标题高度 */
+            overflow: hidden;
+        }
+        
+        .calendar-day-header {
+            text-align: center;
+            font-weight: 600;
+            padding: 0.4rem;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .calendar-day {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.5rem;
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .calendar-day:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        
+        .calendar-day.today {
+            border: 2px solid var(--accent-color);
+            background-color: rgba(255, 154, 60, 0.05);
+        }
+        
+        .calendar-day.other-month {
+            opacity: 0.5;
+        }
+        
+        .date-number {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+        
+        .star-container {
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.2rem;
+            padding-top: 0.2rem;
+            border-top: 1px dashed var(--border-color);
+        }
+        
+        .star-name {
+            font-weight: 500;
+        }
+        
+        .star-count {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+        
+        .star-icon {
+            color: goldenrod;
+        }
+        
+        /* 模态框样式 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--modal-bg);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            transform: translateY(0);
+            animation: modal-in 0.3s ease-out;
+        }
+        
+        @keyframes modal-in {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1.2rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .close-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--text-color);
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        
+        .close-button:hover {
+            opacity: 1;
+        }
+        
+        .star-edit-container {
+            margin-bottom: 1.5rem;
+        }
+        
+        .star-edit-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px dashed var(--border-color);
+        }
+        
+        .star-edit-item:last-child {
+            margin-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .star-edit-name {
+            font-weight: 500;
+            flex: 1;
+        }
+        
+        .star-input-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        .star-input {
+            width: 50px;
+            text-align: center;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 1rem;
+            margin: 0 0.5rem;
+        }
+        
+        .star-btn {
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+        
+        .star-btn:hover {
+            background-color: rgba(58, 110, 165, 0.1);
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 1.2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .modal-button {
+            padding: 0.6rem 1.2rem;
+            border-radius: 5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .cancel-button {
+            background-color: var(--light-gray);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            margin-right: 0.8rem;
+        }
+        
+        .cancel-button:hover {
+            background-color: #e9ecf1;
+        }
+        
+        .save-button {
+            background-color: var(--accent-color);
+            border: 1px solid var(--accent-color);
+            color: white;
+        }
+        
+        .save-button:hover {
+            background-color: #e67e00;
+        }
+        
+        /* 响应式设计 - 更精细的断点控制 */
+        @media (max-width: 768px) {
+            .calendar-day {
+                min-height: 80px;
+            }
+            .star-container {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+            .calendar-grid {
+                height: auto;
+                grid-template-rows: auto repeat(5, minmax(80px, 1fr));
+            }
+            .modal-content {
+                width: 95%;
+                padding: 1rem;
+            }
+        }
+        
+        @media (min-width: 769px) and (max-width: 1199px) {
+            .calendar-grid {
+                grid-template-rows: auto repeat(5, minmax(100px, 1fr));
+            }
+            .date-number {
+                font-size: 1.1rem;
+            }
+        }
+        
+        @media (min-width: 1200px) and (max-width: 1599px) {
+            .calendar-grid {
+                grid-template-rows: auto repeat(5, minmax(120px, 1fr));
+            }
+            .date-number {
+                font-size: 1.3rem;
+            }
+        }
+        
+        @media (min-width: 1600px) {
+            .calendar-container {
+                padding: 1.2rem;
+            }
+            .calendar-grid {
+                grid-template-rows: auto repeat(5, minmax(140px, 1fr));
+                gap: 0.5rem;
+            }
+            .calendar-day {
+                padding: 0.8rem;
+            }
+            .date-number {
+                font-size: 1.5rem;
+            }
+            .star-container {
+                font-size: 1.1rem;
+                margin-top: 0.4rem;
+                padding-top: 0.4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="calendar-container">
+        <header class="calendar-header">
+            <h1 class="calendar-title" id="calendar-title"></h1>
+        </header>
+        <div class="calendar-grid" id="calendar-grid">
+            <!-- 日历头部 -->
+            <div class="calendar-day-header">周一</div>
+            <div class="calendar-day-header">周二</div>
+            <div class="calendar-day-header">周三</div>
+            <div class="calendar-day-header">周四</div>
+            <div class="calendar-day-header">周五</div>
+            <div class="calendar-day-header">周六</div>
+            <div class="calendar-day-header">周日</div>
+            
+            <!-- 日历内容将通过JS动态生成 -->
+        </div>
+    </div>
+
+    <!-- 编辑星星的模态框 -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">编辑星星</h3>
+                <button class="close-button" id="closeModal">&times;</button>
+            </div>
+            <div class="star-edit-container" id="starEditContainer">
+                <!-- 编辑项将通过JS动态生成 -->
+            </div>
+            <div class="modal-footer">
+                <button class="modal-button cancel-button" id="cancelEdit">取消</button>
+                <button class="modal-button save-button" id="saveEdit">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 存储所有日期的星星数据
+        const starData = {};
+        
+        // 存储当前显示的年月
+        let currentDisplayYear;
+        let currentDisplayMonth;
+        
+        // 本地存储键
+        const STORAGE_KEY = 'calendarStarData';
+        
+        // 家庭成员定义
+        const familyMembers = [
+            { name: '爸爸', defaultStars: 0 },
+            { name: '妈妈', defaultStars: 0 },
+            { name: '宝宝', defaultStars: 0 }
+        ];
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // 从本地存储加载数据
+            loadStarDataFromStorage();
+            
+            const today = new Date();
+            currentDisplayYear = today.getFullYear();
+            currentDisplayMonth = today.getMonth();
+            
+            // 设置日历标题
+            const monthNames = ["一月", "二月", "三月", "四月", "五月", "六月", 
+                                "七月", "八月", "九月", "十月", "十一月", "十二月"];
+            document.getElementById('calendar-title').textContent = `${currentDisplayYear}年 ${monthNames[currentDisplayMonth]}`;
+            
+            // 生成日历
+            generateCalendar(currentDisplayYear, currentDisplayMonth);
+            
+            // 设置模态框事件处理
+            setupModalEvents();
+        });
+        
+        // 从本地存储加载星星数据
+        function loadStarDataFromStorage() {
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            if (savedData) {
+                // 合并保存的数据到starData对象
+                Object.assign(starData, JSON.parse(savedData));
+            }
+        }
+        
+        // 保存星星数据到本地存储
+        function saveStarDataToStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(starData));
+        }
+        
+        function generateCalendar(year, month) {
+            const calendarGrid = document.getElementById('calendar-grid');
+            const today = new Date();
+            
+            // 获取当月第一天
+            const firstDayOfMonth = new Date(year, month, 1);
+            // 获取当月最后一天
+            const lastDayOfMonth = new Date(year, month + 1, 0);
+            
+            // 确定第一天是周几 (0-6, 0是周日)
+            // 我们需要调整为周一为1，周日为7
+            let firstDayIndex = firstDayOfMonth.getDay() || 7;
+            firstDayIndex = firstDayIndex === 1 ? 1 : firstDayIndex - 1;
+            
+            // 上个月需要显示的天数
+            const daysFromPrevMonth = firstDayIndex - 1;
+            
+            // 上个月的最后一天
+            const lastDayOfPrevMonth = new Date(year, month, 0);
+            
+            // 计算总共需要多少行
+            const totalDays = daysFromPrevMonth + lastDayOfMonth.getDate();
+            const rows = Math.ceil(totalDays / 7);
+            const totalCells = rows * 7;
+            
+            // 清除现有日历内容（保留头部）
+            while (calendarGrid.children.length > 7) {
+                calendarGrid.removeChild(calendarGrid.lastChild);
+            }
+            
+            // 生成上个月的剩余天数
+            for (let i = 0; i < daysFromPrevMonth; i++) {
+                const dayNumber = lastDayOfPrevMonth.getDate() - daysFromPrevMonth + i + 1;
+                const dayDate = new Date(year, month - 1, dayNumber);
+                const dayElement = createDayElement(dayNumber, true, false, dayDate);
+                calendarGrid.appendChild(dayElement);
+            }
+            
+            // 生成当月的天数
+            for (let i = 1; i <= lastDayOfMonth.getDate(); i++) {
+                const isToday = today.getDate() === i && 
+                               today.getMonth() === month && 
+                               today.getFullYear() === year;
+                const dayDate = new Date(year, month, i);
+                const dayElement = createDayElement(i, false, isToday, dayDate);
+                calendarGrid.appendChild(dayElement);
+            }
+            
+            // 生成下个月的起始天数
+            const remainingCells = totalCells - (daysFromPrevMonth + lastDayOfMonth.getDate());
+            for (let i = 1; i <= remainingCells; i++) {
+                const dayDate = new Date(year, month + 1, i);
+                const dayElement = createDayElement(i, true, false, dayDate);
+                calendarGrid.appendChild(dayElement);
+            }
+        }
+        
+        function createDayElement(dayNumber, isOtherMonth, isToday = false, date) {
+            const dayElement = document.createElement('div');
+            dayElement.className = 'calendar-day';
+            if (isOtherMonth) {
+                dayElement.classList.add('other-month');
+            }
+            if (isToday) {
+                dayElement.classList.add('today');
+            }
+            
+            // 创建日期数字
+            const dateNumber = document.createElement('div');
+            dateNumber.className = 'date-number';
+            dateNumber.textContent = dayNumber;
+            dayElement.appendChild(dateNumber);
+            
+            // 为所有日期添加点击事件和星星数据
+            const dateKey = getDateKey(date);
+            
+            // 如果不是其他月的日期，则添加星星数据和点击事件
+            //if (!isOtherMonth) {
+                // 如果没有数据，初始化星星数据为0
+                if (!starData[dateKey]) {
+                    starData[dateKey] = familyMembers.map(member => {
+                        return { name: member.name, stars: member.defaultStars };
+                    });
+                }
+                
+                // 添加星星容器
+                starData[dateKey].forEach(member => {
+                    const starContainer = document.createElement('div');
+                    starContainer.className = 'star-container';
+                    
+                    const starName = document.createElement('span');
+                    starName.className = 'star-name';
+                    starName.textContent = member.name;
+                    
+                    const starCount = document.createElement('span');
+                    starCount.className = 'star-count';
+                    starCount.innerHTML = `${member.stars} <span class="star-icon">★</span>`;
+                    
+                    starContainer.appendChild(starName);
+                    starContainer.appendChild(starCount);
+                    dayElement.appendChild(starContainer);
+                });
+                
+                // 添加点击事件处理
+                dayElement.addEventListener('click', function() {
+                    openEditModal(date, dateKey);
+                });
+            //}
+            
+            return dayElement;
+        }
+        
+        function getDateKey(date) {
+            return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+        }
+        
+        function setupModalEvents() {
+            const modal = document.getElementById('editModal');
+            const closeBtn = document.getElementById('closeModal');
+            const cancelBtn = document.getElementById('cancelEdit');
+            const saveBtn = document.getElementById('saveEdit');
+            
+            closeBtn.addEventListener('click', closeModal);
+            cancelBtn.addEventListener('click', closeModal);
+            
+            saveBtn.addEventListener('click', function() {
+                saveStarData();
+                closeModal();
+            });
+            
+            // 点击模态框外部关闭
+            modal.addEventListener('click', function(event) {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+        }
+        
+        let currentEditingDateKey = null;
+        let currentEditingDate = null;
+        
+        function openEditModal(date, dateKey) {
+            const modal = document.getElementById('editModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const starEditContainer = document.getElementById('starEditContainer');
+            
+            // 清空现有内容
+            starEditContainer.innerHTML = '';
+            
+            // 设置当前编辑的日期
+            currentEditingDateKey = dateKey;
+            currentEditingDate = date;
+            
+            // 设置模态框标题
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            modalTitle.textContent = `编辑 ${date.toLocaleDateString('zh-CN', options)}`;
+            
+            // 为每个成员创建编辑项
+            starData[dateKey].forEach((member, index) => {
+                const editItem = createStarEditItem(member, index);
+                starEditContainer.appendChild(editItem);
+            });
+            
+            // 显示模态框
+            modal.style.display = 'flex';
+        }
+        
+        function createStarEditItem(member, index) {
+            const editItem = document.createElement('div');
+            editItem.className = 'star-edit-item';
+            
+            const nameLabel = document.createElement('div');
+            nameLabel.className = 'star-edit-name';
+            nameLabel.textContent = member.name;
+            
+            const inputContainer = document.createElement('div');
+            inputContainer.className = 'star-input-container';
+            
+            const decreaseBtn = document.createElement('button');
+            decreaseBtn.className = 'star-btn';
+            decreaseBtn.textContent = '-';
+            decreaseBtn.addEventListener('click', function() {
+                const input = this.parentNode.querySelector('.star-input');
+                const currentValue = parseInt(input.value) || 0;
+                if (currentValue > 0) {
+                    input.value = currentValue - 1;
+                }
+            });
+            
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.min = '0';
+            input.max = '5';
+            input.value = member.stars;
+            input.className = 'star-input';
+            input.dataset.index = index;
+            
+            const increaseBtn = document.createElement('button');
+            increaseBtn.className = 'star-btn';
+            increaseBtn.textContent = '+';
+            increaseBtn.addEventListener('click', function() {
+                const input = this.parentNode.querySelector('.star-input');
+                const currentValue = parseInt(input.value) || 0;
+                if (currentValue < 5) {
+                    input.value = currentValue + 1;
+                }
+            });
+            
+            inputContainer.appendChild(decreaseBtn);
+            inputContainer.appendChild(input);
+            inputContainer.appendChild(increaseBtn);
+            
+            editItem.appendChild(nameLabel);
+            editItem.appendChild(inputContainer);
+            
+            return editItem;
+        }
+        
+        function saveStarData() {
+            const inputs = document.querySelectorAll('.star-input');
+            
+            inputs.forEach(input => {
+                const index = parseInt(input.dataset.index);
+                const value = Math.min(5, Math.max(0, parseInt(input.value) || 0));
+                starData[currentEditingDateKey][index].stars = value;
+            });
+            
+            // 保存到本地存储
+            saveStarDataToStorage();
+            
+            // 更新日历显示
+            updateCalendarDay(currentEditingDateKey);
+        }
+        
+        function updateCalendarDay(dateKey) {
+            const calendarGrid = document.getElementById('calendar-grid');
+            const dateParts = dateKey.split('-');
+            const year = parseInt(dateParts[0]);
+            const month = parseInt(dateParts[1]);
+            const day = parseInt(dateParts[2]);
+            
+            // 只有当日期是当前显示月份时才更新
+            if (month === currentDisplayMonth && year === currentDisplayYear) {
+                // 获取当前显示月份第一天是周几
+                const firstDayOfMonth = new Date(year, month, 1);
+                let firstDayIndex = firstDayOfMonth.getDay() || 7;
+                firstDayIndex = firstDayIndex === 1 ? 1 : firstDayIndex - 1;
+                
+                // 计算该日期在网格中的索引 (加7是跳过表头行)
+                const dayIndex = 7 + firstDayIndex - 1 + (day - 1);
+                
+                if (dayIndex >= 7 && dayIndex < calendarGrid.children.length) {
+                    const dayElement = calendarGrid.children[dayIndex];
+                    
+                    // 清除现有的星星容器
+                    const starContainers = dayElement.querySelectorAll('.star-container');
+                    starContainers.forEach(container => container.remove());
+                    
+                    // 添加更新后的星星容器
+                    starData[dateKey].forEach(member => {
+                        const starContainer = document.createElement('div');
+                        starContainer.className = 'star-container';
+                        
+                        const starName = document.createElement('span');
+                        starName.className = 'star-name';
+                        starName.textContent = member.name;
+                        
+                        const starCount = document.createElement('span');
+                        starCount.className = 'star-count';
+                        starCount.innerHTML = `${member.stars} <span class="star-icon">★</span>`;
+                        
+                        starContainer.appendChild(starName);
+                        starContainer.appendChild(starCount);
+                        dayElement.appendChild(starContainer);
+                    });
+                }
+            }
+        }
+        
+        function closeModal() {
+            const modal = document.getElementById('editModal');
+            modal.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
