@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数字项目</title>
+    <style>
+        /* 新增样式 */
+        body {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        .number-column {
+            display: grid;
+            grid-template-rows: repeat(5, 1fr);
+            gap: 1.5rem;
+        }
+        .number-item, .shape-container {
+            background: #f0f4ff;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            font-size: 2rem;
+        }
+        .shape {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto;
+            background: #4a90e2;
+        }
+        .circle { border-radius: 50%; }
+        .triangle { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); }
+        .stars-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;  /* 行间距与数字区域一致 */
+        }
+        .star-row {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+        }
+        .star {
+            font-size: 3rem;  /* 增大星星尺寸 */
+            min-width: 50px;    /* 保持星星间距 */
+            cursor: pointer;
+            color: #ddd;
+            transition: color 0.3s;
+            transform: translateY(-3px);
+        }
+        .star.active { color: #4CAF50; }
+    </style>
+    <style>
+.star {
+    font-size: 3rem;  /* 调整为与数字相同大小 */
+    min-width: 60px;  /* 增加最小宽度 */
+    transform: translateY(-3px);  /* 微调垂直位置 */
+}
+
+.number-row, .star-row {
+    min-height: 100px;  /* 统一行高 */
+    align-items: center;  /* 垂直居中 */
+}
+
+.grid-container {
+    gap: 1.5rem;  /* 减小列间距 */
+    align-items: start;  /* 顶部对齐 */
+}
+
+.stars-container {
+    height: 100%;
+    justify-content: space-between;  /* 均匀分布行 */
+    padding: 0.5rem 0;  /* 增加垂直内边距 */
+}
+    </style>
+</head>
+<body>
+    <!-- 删除 header 部分 -->
+    <main>
+        <div class="grid-container">
+            <!-- 第一列 -->
+            <div class="number-column" id="numberColumn">
+                <!-- 删除原有固定结构 -->
+            </div>
+            
+            <!-- 第二列 -->
+            <div class="stars-container">
+                <!-- 创建5行，每行两个星星 -->
+                <div class="star-row">
+                    <div class="star">★</div>
+                    <div class="star">★</div>
+                </div>
+                <div class="star-row">
+                    <div class="star">★</div>
+                    <div class="star">★</div>
+                </div>
+                <div class="star-row">
+                    <div class="star">★</div>
+                    <div class="star">★</div>
+                </div>
+                <div class="star-row">
+                    <div class="star">★</div>
+                    <div class="star">★</div>
+                </div>
+                <div class="star-row">
+                    <div class="star">★</div>
+                    <div class="star">★</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <style>
+        /* 修改网格布局为flex布局 */
+        .number-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .number-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+        /* 调整元素为正方形 */
+        .number-item, .shape-container {
+            flex: 1;
+            aspect-ratio: 1/1;
+            padding: 1.5rem;
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .shape {
+            width: 60%;
+            height: 60%;
+        }
+    </style>
+
+    <script>
+        function initApp() {
+            const container = document.getElementById('numberColumn');
+            container.innerHTML = '';
+
+            // 创建5行
+            for(let row = 0; row < 5; row++) {
+                const rowContainer = document.createElement('div');
+                rowContainer.className = 'number-row';
+
+                // 生成4个不重复的1-9数字
+                const numbers = [];
+                while(numbers.length < 4) {
+                    const num = Math.floor(Math.random() * 9) + 1;
+                    if(!numbers.includes(num)) {
+                        numbers.push(num);
+                    }
+                }
+
+                // 创建元素数组（4数字 + 1图形）
+                const elements = numbers.map(num => ({
+                    type: 'number',
+                    value: num
+                }));
+                elements.push({ type: 'shape' });
+                elements.sort(() => Math.random() - 0.5);
+
+                elements.forEach(element => {
+                    if(element.type === 'number') {
+                        const div = document.createElement('div');
+                        div.className = 'number-item';
+                        div.textContent = element.value;
+                        rowContainer.appendChild(div); // 关键修改：附加到行容器
+                    } else {
+                        const shapeContainer = document.createElement('div');
+                        shapeContainer.className = 'shape-container';
+                        const shape = document.createElement('div');
+                        const shapes = ['circle', 'triangle', 'square'];
+                        shape.className = `shape ${shapes[Math.floor(Math.random()*3)]}`;
+                        shapeContainer.appendChild(shape);
+                        rowContainer.appendChild(shapeContainer); // 关键修改：附加到行容器
+                    }
+                });
+
+                container.appendChild(rowContainer);
+            }
+        }
+
+        window.onload = initApp;
+    </script>
+
+    <style>
+        /* 修改激活状态样式 */
+        .star.active {
+            color: #4CAF50 !important;
+            text-shadow: 0 0 10px rgba(76,175,80,0.5);
+        }
+    </style>
+
+    <script>
+        // 在initApp函数后新增点击处理函数
+        function handleStarClick(event) {
+            const star = event.target;
+            star.classList.toggle('active');
+        }
+    
+        // 在window.onload中添加事件监听
+        window.onload = function() {
+            initApp();
+            document.querySelectorAll('.star').forEach(star => {
+                star.addEventListener('click', handleStarClick);
+            });
+        };
+    </script>
+</body>
+</html>
