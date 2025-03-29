@@ -178,11 +178,18 @@
                     } else {
                         const shapeContainer = document.createElement('div');
                         shapeContainer.className = 'shape-container';
-                        const shape = document.createElement('div');
-                        const shapes = ['circle', 'triangle', 'square'];
-                        shape.className = `shape ${shapes[Math.floor(Math.random()*3)]}`;
-                        shapeContainer.appendChild(shape);
-                        rowContainer.appendChild(shapeContainer); // 关键修改：附加到行容器
+                        const img = document.createElement('img');  // 改为img标签
+                        const shapes = {
+                            circle: 'circle.png',
+                            triangle: 'triangle.png',
+                            square: 'square.png'
+                        };
+                        const shapeKeys = Object.keys(shapes);
+                        const randomShape = shapeKeys[Math.floor(Math.random()*shapeKeys.length)];
+                        img.src = `images/${shapes[randomShape]}`;  // 假设图片存放在images目录
+                        img.className = 'shape-image';  // 新增图片样式类
+                        shapeContainer.appendChild(img);
+                        rowContainer.appendChild(shapeContainer);
                     }
                 });
 
@@ -218,3 +225,16 @@
     </script>
 </body>
 </html>
+
+<style>
+    /* 新增图片样式 */
+    .shape-image {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+    
+    /* 移除原有形状样式 */
+    .shape { display: none; }  /* 禁用原有图形样式 */
+    .circle, .triangle, .square { display: none; }
+</style>
